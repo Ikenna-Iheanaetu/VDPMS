@@ -37,22 +37,23 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-
 model Patient {
-  id        Int      @id @default(autoincrement()) 
+  id        Int      @id @default(autoincrement())
   userId    Int      @unique
   user      User     @relation("UserToPatient", fields: [userId], references: [id], onDelete: Cascade)
   age       Int
+  patientId String   @unique
   gender    Gender
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Nurse {
-  id        Int      @id @default(autoincrement()) 
+  id        Int      @id @default(autoincrement())
   userId    Int      @unique
   user      User     @relation("UserToNurse", fields: [userId], references: [id], onDelete: Cascade)
   gender    Gender
+  nurseId   String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -62,6 +63,7 @@ model Doctor {
   userId    Int      @unique
   user      User     @relation("UserToDoctor", fields: [userId], references: [id], onDelete: Cascade)
   gender    Gender
+  doctorId  String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
