@@ -85,7 +85,7 @@ const patients = [
   },
   {
     name: "Ella Lucia",
-    visitId: "OPD-2345",
+    visitId: "OPD-2346",
     date: "8/15/21",
     gender: "Male",
     disease: "Diabetes",
