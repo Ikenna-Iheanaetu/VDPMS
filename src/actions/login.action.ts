@@ -23,7 +23,7 @@ export const userLoginAction = async (formData: FormData) => {
       patient: true,
       nurse: true,
       doctor: true,
-    },
+    }
   });
 
   if (!user) return { error: "User does not exist" };
@@ -48,7 +48,16 @@ export const userLoginAction = async (formData: FormData) => {
 
   const cookieStore = await cookies();
 
-  const session = await encrypt(user);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { role, name, id: userId, ...others } = user
+
+  const cookieToBeEncrypted ={
+    name,
+    userId,
+    role
+  }
+
+  const session = await encrypt(cookieToBeEncrypted);
 
   cookieStore.set("cookie", session, {
     httpOnly: true,
