@@ -9,10 +9,58 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// model User {
+model User {
+  id        Int      @id @default(autoincrement()) // Auto-generated integer ID
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  patient   Patient? @relation("UserToPatient")
+  nurse     Nurse?   @relation("UserToNurse")
+  doctor    Doctor?  @relation("UserToDoctor")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-// }
+enum Role {
+  PATIENT
+  NURSE
+  DOCTOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model Patient {
+  id        Int      @id @default(autoincrement()) 
+  userId    Int      @unique
+  user      User     @relation("UserToPatient", fields: [userId], references: [id], onDelete: Cascade)
+  age       Int
+  gender    Gender
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Nurse {
+  id        Int      @id @default(autoincrement()) 
+  userId    Int      @unique
+  user      User     @relation("UserToNurse", fields: [userId], references: [id], onDelete: Cascade)
+  gender    Gender
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Doctor {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation("UserToDoctor", fields: [userId], references: [id], onDelete: Cascade)
+  gender    Gender
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
