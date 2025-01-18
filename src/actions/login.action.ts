@@ -57,5 +57,5 @@ export const userLoginAction = async (formData: FormData) => {
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  return { success: "Login successful" };
+  return { success: "Login successful", user };
 };
