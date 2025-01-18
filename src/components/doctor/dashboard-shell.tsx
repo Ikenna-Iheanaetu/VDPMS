@@ -1,18 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Sidebar from "./sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Menu } from 'lucide-react'
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useState } from "react";
+import Sidebar from "./sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import logout from "@/actions/logout.action";
+import { redirect } from "next/navigation";
 
 interface DashboardShellProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export default function DashboardShell({ children }: DashboardShellProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const loggedOut = await logout();
+
+    if (loggedOut.success && loggedOut.data) {
+      redirect(loggedOut.data?.redirectUrl);
+    }
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -20,7 +30,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       <div className="hidden lg:block">
         <Sidebar />
       </div>
-      
+
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[250px] p-0">
@@ -31,19 +41,37 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       <div className="flex-1">
         <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6">
           <div className="flex flex-1 items-center gap-4">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsSidebarOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsSidebarOpen(true)}
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </div>
           <div className="flex items-center gap-2 lg:gap-4">
             <div className="flex items-center gap-8">
               <Avatar>
-                <AvatarImage src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png" alt="User" />
+                <AvatarImage
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png"
+                  alt="User"
+                />
                 <AvatarFallback>SC</AvatarFallback>
               </Avatar>
               <div className="text-sm space-y-2 hidden md:block">
                 <div className="font-semibold">Stephen Conley</div>
-                <div className="text-muted-foreground font-normal">Cardiologist</div>
+                <div className="text-muted-foreground font-normal">
+                  Cardiologist
+                </div>
+              </div>
+              <div>
+                <Button
+                  className="bg-red-500 text-white"
+                  onClick={() => handleLogout()}
+                >
+                  Logout
+                </Button>
               </div>
             </div>
           </div>
@@ -51,6 +79,5 @@ export default function DashboardShell({ children }: DashboardShellProps) {
         <main className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }
-

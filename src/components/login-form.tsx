@@ -56,11 +56,9 @@ export default function LoginForm() {
       setIsLoading(false);
     }
 
-    console.log(login.user);
+    // console.log(login.user);
 
-    setTimeout(() => {
-      router.push(`${login.user?.role.toLowerCase()}`);
-    }, 3000);
+    router.push(`${login.user?.role.toLowerCase()}`);
   }
 
   return (
