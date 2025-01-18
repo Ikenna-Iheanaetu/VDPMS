@@ -13,6 +13,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  PATIENT
+  NURSE
+  DOCTOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
 model User {
   id        Int      @id @default(autoincrement()) // Auto-generated integer ID
   email     String   @unique
@@ -26,16 +37,6 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-enum Role {
-  PATIENT
-  NURSE
-  DOCTOR
-}
-
-enum Gender {
-  MALE
-  FEMALE
-}
 
 model Patient {
   id        Int      @id @default(autoincrement()) 
