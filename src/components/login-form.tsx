@@ -53,12 +53,16 @@ export default function LoginForm() {
       setTimeout(() => {
         setError(login.error);
       }, 3000);
-      setIsLoading(false);
+     setIsLoading(false);
     }
 
-    // console.log(login.user);
+    console.log(login.user);
 
-    router.push(`${login.user?.role.toLowerCase()}`);
+    if (login.user?.role === "PATIENT") {
+      router.push(`${login.user?.role.toLowerCase()}/${login.user.id}`);
+    } else {
+      router.push(`${login.user?.role.toLowerCase()}`);
+    }
   }
 
   return (
