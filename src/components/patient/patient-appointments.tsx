@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
+import AppointmentRequestDialog from "./patient-appointment-dialog";
 
 const appointments = [
   {
@@ -24,6 +25,7 @@ export function PatientAppointments({ patientId }: { patientId: string }) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>Upcoming Appointments</CardTitle>
+        <AppointmentRequestDialog />
       </CardHeader>
       <CardContent>
         {appointments.map((appointment) => (
