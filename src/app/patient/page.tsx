@@ -2,10 +2,10 @@ import { PatientProfile } from "@/components/patient/patient-profile";
 import { PatientAppointments } from "@/components/patient/patient-appointments";
 import { PatientMedicalHistory } from "@/components/patient/patient-medical-history";
 
-export default function PatientPage({ params }: { params: { id: string } }) {
+export default function PatientPage() {
   // In a real application, we would fetch the patient data here
   const patient = {
-    id: params.id,
+    id: "0001",
     name: "John Doe",
     age: 35,
     gender: "Male",
