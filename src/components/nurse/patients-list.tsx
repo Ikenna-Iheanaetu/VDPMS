@@ -14,14 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type * as z from "zod"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import AddPatientForm from "./add-patient-form"
 
 interface Patient {
   id: string
+  name: string
   room: string
   condition: string
   issue: string
@@ -37,6 +36,7 @@ interface Patient {
 const initialPatients: Patient[] = [
   {
     id: "VUG/PAT/25/0111",
+    name: "John Snow",
     room: "201",
     condition: "Stable",
     issue: "Post-operative recovery",
@@ -50,6 +50,7 @@ const initialPatients: Patient[] = [
   },
   {
     id: "VUG/PAT/25/0112",
+    name: "Arya Stark",
     room: "ICU-3",
     condition: "Critical",
     issue: "Severe trauma from car accident",
@@ -63,6 +64,7 @@ const initialPatients: Patient[] = [
   },
   {
     id: "VUG/PAT/25/0113",
+    name: "Cersi Lannister",
     room: "305",
     condition: "Stable",
     issue: "Pneumonia, responding well to treatment",
@@ -117,6 +119,17 @@ export default function PatientList() {
     })
   }
 
+  const handleUpdateCondition = (patientId: string, newCondition: string) => {
+    const updatedPatients = patients.map((patient) =>
+      patient.id === patientId ? { ...patient, condition: newCondition } : patient,
+    )
+    setPatients(updatedPatients)
+    toast({
+      title: "Patient Condition Updated",
+      description: `Condition for patient ${patientId} has been updated to ${newCondition}.`,
+    })
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -157,17 +170,19 @@ export default function PatientList() {
                 <TableCell className="font-medium">{patient.id}</TableCell>
                 <TableCell>{patient.room}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      patient.condition === "Critical"
-                        ? "destructive"
-                        : patient.condition === "Emergency"
-                          ? "destructive"
-                          : "secondary"
-                    }
+                  <Select
+                    defaultValue={patient.condition}
+                    onValueChange={(value) => handleUpdateCondition(patient.id, value)}
                   >
-                    {patient.condition}
-                  </Badge>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="Select condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Stable">Stable</SelectItem>
+                      <SelectItem value="Improving">Improving</SelectItem>
+                      <SelectItem value="Critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{patient.issue}</TableCell>
                 <TableCell className="hidden sm:table-cell">{patient.lastChecked}</TableCell>
