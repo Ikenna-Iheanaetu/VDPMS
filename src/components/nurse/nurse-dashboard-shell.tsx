@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Bell, HelpCircle, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import NurseAppSidebar from "./nurse-app-sidebar";
 
@@ -40,19 +38,8 @@ export default function NurseDashboardShell({ children }: NurseDashboardShellPro
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <Input
-              type="search"
-              placeholder="Search patients, appointments..."
-              className="max-w-[400px] hidden md:block"
-            />
           </div>
           <div className="flex items-center gap-2 lg:gap-4">
-            <Button variant="ghost" size="icon">
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src="/nurse-avatar.png" alt="Nurse" />
@@ -60,7 +47,7 @@ export default function NurseDashboardShell({ children }: NurseDashboardShellPro
               </Avatar>
               <div className="text-sm hidden md:block">
                 <div className="font-semibold">Nancy Nurse</div>
-                <div className="text-muted-foreground">Head Nurse</div>
+                <div className="text-muted-foreground">Nurse</div>
               </div>
             </div>
           </div>
