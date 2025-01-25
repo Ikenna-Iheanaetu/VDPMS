@@ -6,13 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import NurseAppSidebar from "./nurse-app-sidebar";
+import logout from "@/actions/logout.action";
+import { redirect } from "next/navigation";
 
 interface NurseDashboardShellProps {
   children: React.ReactNode;
 }
 
-export default function NurseDashboardShell({ children }: NurseDashboardShellProps) {
+export default function NurseDashboardShell({
+  children,
+}: NurseDashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const loggedOut = await logout();
+
+    if (loggedOut.success && loggedOut.data) {
+      redirect(loggedOut.data?.redirectUrl);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -21,8 +33,7 @@ export default function NurseDashboardShell({ children }: NurseDashboardShellPro
       </div>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetTrigger asChild>
-        </SheetTrigger>
+        <SheetTrigger asChild></SheetTrigger>
         <SheetContent side="left" className="w-[250px] p-0">
           <NurseAppSidebar />
         </SheetContent>
@@ -49,6 +60,14 @@ export default function NurseDashboardShell({ children }: NurseDashboardShellPro
               <div className="text-sm hidden md:block">
                 <div className="font-semibold">Nancy Nurse</div>
                 <div className="text-muted-foreground">Nurse</div>
+              </div>
+              <div>
+                <Button
+                  className="bg-red-500 text-white"
+                  onClick={() => handleLogout()}
+                >
+                  Logout
+                </Button>
               </div>
             </div>
           </div>

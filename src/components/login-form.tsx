@@ -56,13 +56,7 @@ export default function LoginForm() {
      setIsLoading(false);
     }
 
-    console.log(login.user);
-
-    if (login.user?.role === "PATIENT") {
-      router.push(`${login.user?.role.toLowerCase()}/${login.user.patient?.patientId.split("/")[3]}`);
-    } else {
-      router.push(`${login.user?.role.toLowerCase()}`);
-    }
+    router.push(`${login.user?.role.toLowerCase()}`);
   }
 
   return (
