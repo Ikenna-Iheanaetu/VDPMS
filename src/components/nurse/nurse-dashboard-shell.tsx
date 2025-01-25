@@ -52,14 +52,16 @@ export default function NurseDashboardShell({
             </Button>
           </div>
           <div className="flex items-center gap-2 lg:gap-4">
-            <div className="flex items-center gap-2">
-              <Avatar>
-                <AvatarImage src="/nurse-avatar.png" alt="Nurse" />
-                <AvatarFallback>NN</AvatarFallback>
-              </Avatar>
-              <div className="text-sm hidden md:block">
-                <div className="font-semibold">Nancy Nurse</div>
-                <div className="text-muted-foreground">Nurse</div>
+            <div className="flex items-center space-x-3 gap-2">
+              <div className="flex items-center gap-2">
+                <Avatar>
+                  <AvatarImage src="/nurse-avatar.png" alt="Nurse" />
+                  <AvatarFallback>NN</AvatarFallback>
+                </Avatar>
+                <div className="text-sm hidden md:block">
+                  <div className="font-semibold">Nancy Nurse</div>
+                  <div className="text-muted-foreground">Nurse</div>
+                </div>
               </div>
               <div>
                 <Button

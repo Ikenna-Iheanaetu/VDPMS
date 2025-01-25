@@ -42,6 +42,13 @@ type ScheduledAppointment = {
   appointmentType: string
   reason: string
   status: "scheduled" | "in-progress" | "completed" | "cancelled"
+  vitalsChecked?: boolean
+  vitals?: {
+    temperature: string
+    bloodPressure: string
+    heartRate: string
+    respiratoryRate: string
+  }
 }
 
 const appointmentRequests: AppointmentRequest[] = [
@@ -113,6 +120,17 @@ export default function NurseAppointmentManager() {
     appointmentType: "",
     reason: "",
     priority: "normal",
+  })
+  const [vitalsCheck, setVitalsCheck] = useState<{
+    temperature: string
+    bloodPressure: string
+    heartRate: string
+    respiratoryRate: string
+  }>({
+    temperature: "",
+    bloodPressure: "",
+    heartRate: "",
+    respiratoryRate: "",
   })
   const { toast } = useToast()
 
@@ -188,6 +206,30 @@ export default function NurseAppointmentManager() {
     toast({
       title: "Appointment Status Updated",
       description: `Appointment status changed to ${newStatus}.`,
+    })
+  }
+
+  const handleVitalsCheck = (appointmentId: number) => {
+    const updatedAppointments = appointments.map((apt) =>
+      apt.id === appointmentId
+        ? {
+            ...apt,
+            status: "in-progress",
+            vitalsChecked: true,
+            vitals: vitalsCheck,
+          }
+        : apt,
+    )
+    setAppointments(updatedAppointments as ScheduledAppointment[])
+    toast({
+      title: "Vitals Checked",
+      description: `Vitals for appointment ${appointmentId} have been recorded.`,
+    })
+    setVitalsCheck({
+      temperature: "",
+      bloodPressure: "",
+      heartRate: "",
+      respiratoryRate: "",
     })
   }
 
@@ -461,22 +503,91 @@ export default function NurseAppointmentManager() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        onValueChange={(value) =>
-                          handleUpdateAppointmentStatus(appointment.id, value as ScheduledAppointment["status"])
-                        }
-                        defaultValue={appointment.status}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Update status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="scheduled">Scheduled</SelectItem>
-                          <SelectItem value="in-progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {appointment.status === "scheduled" ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline">Check Vitals</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Check Patient Vitals</DialogTitle>
+                              <DialogDescription>
+                                {/*  eslint-disable-next-line react/no-unescaped-entities */}
+                                Record the patient's vitals before their appointment with the doctor.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="temperature" className="text-right">
+                                  Temperature
+                                </Label>
+                                <Input
+                                  id="temperature"
+                                  placeholder="98.6°F"
+                                  className="col-span-3"
+                                  value={vitalsCheck.temperature}
+                                  onChange={(e) => setVitalsCheck({ ...vitalsCheck, temperature: e.target.value })}
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="bloodPressure" className="text-right">
+                                  Blood Pressure
+                                </Label>
+                                <Input
+                                  id="bloodPressure"
+                                  placeholder="120/80 mmHg"
+                                  className="col-span-3"
+                                  value={vitalsCheck.bloodPressure}
+                                  onChange={(e) => setVitalsCheck({ ...vitalsCheck, bloodPressure: e.target.value })}
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="heartRate" className="text-right">
+                                  Heart Rate
+                                </Label>
+                                <Input
+                                  id="heartRate"
+                                  placeholder="72 bpm"
+                                  className="col-span-3"
+                                  value={vitalsCheck.heartRate}
+                                  onChange={(e) => setVitalsCheck({ ...vitalsCheck, heartRate: e.target.value })}
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="respiratoryRate" className="text-right">
+                                  Respiratory Rate
+                                </Label>
+                                <Input
+                                  id="respiratoryRate"
+                                  placeholder="16 breaths/min"
+                                  className="col-span-3"
+                                  value={vitalsCheck.respiratoryRate}
+                                  onChange={(e) => setVitalsCheck({ ...vitalsCheck, respiratoryRate: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button onClick={() => handleVitalsCheck(appointment.id)}>Record Vitals</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <Select
+                          onValueChange={(value) =>
+                            handleUpdateAppointmentStatus(appointment.id, value as ScheduledAppointment["status"])
+                          }
+                          defaultValue={appointment.status}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Update status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
