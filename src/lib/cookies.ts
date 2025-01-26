@@ -1,17 +1,19 @@
 import { cookies } from "next/headers";
 import { decrypt } from "./jwt";
+import { Role } from "@prisma/client";
 
 interface CookieReturnType {
-  id: number;
+  userId: number;
   name: string;
-  role: "DOCTOR" | "NURSE" | "PATIENT";
+  role: Role
+  roleSpecificId: string
+  email: string
   exp: number;
 }
 
-
 export async function getCookies(): Promise<CookieReturnType | null> {
   const cookieStore = await cookies();
-  const session = cookieStore.get("cookie");
+  const session = cookieStore.get("session");
 
   if (!session) {
     return null;

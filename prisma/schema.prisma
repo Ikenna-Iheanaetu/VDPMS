@@ -27,8 +27,6 @@ enum AppointmentType {
   FOLLOW_UP
   CONSULTATION
   EMERGENCY
-  VIDEO
-  CLINIC
 }
 
 enum AppointmentStatus {
@@ -37,14 +35,12 @@ enum AppointmentStatus {
   COMPLETED
   CANCELLED
   PENDING
-  WAITING
 }
 
 enum Priority {
-  LOW
-  MEDIUM
-  HIGH
+  NORMAL
   URGENT
+  EMERGENCY
 }
 
 enum TaskStatus {
@@ -123,10 +119,10 @@ model Nurse {
 
 model Appointment {
   id            Int               @id @default(autoincrement())
-  patient       Patient           @relation(fields: [patientId], references: [id])
-  patientId     Int
-  doctor        Doctor            @relation(fields: [doctorId], references: [id])
-  doctorId      Int
+  patient       Patient           @relation(fields: [patientId], references: [patientId])
+  patientId     String
+  doctor        Doctor            @relation(fields: [doctorId], references: [doctorId])
+  doctorId      String
   date          DateTime
   time          String
   type          AppointmentType
@@ -164,7 +160,7 @@ model AppointmentRequest {
   preferredDate DateTime
   type          AppointmentType
   reason        String
-  priority      Priority          @default(LOW)
+  priority      Priority          @default(NORMAL)
   status        AppointmentStatus @default(PENDING)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt

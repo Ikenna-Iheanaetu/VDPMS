@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { userLoginAction } from "@/actions/login.action";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -34,6 +35,7 @@ export default function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,19 +47,46 @@ export default function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-
-    const login = await userLoginAction(values);
-
-    if (login.error) {
-      setTimeout(() => {
+    try {
+      setIsLoading(true);
+      setError(''); // Clear previous errors
+  
+      const login = await userLoginAction(values);
+  
+      if (login.error) {
         setError(login.error);
-      }, 3000);
-     setIsLoading(false);
-    }
+        return;
+      }
+  
+      if (!login.user?.role) {
+        setError('Invalid user role');
+        return;
+      }
+  
+      // Show success feedback before redirect
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${login.user.name}!`,
+      });
+  
+      console.log(login)
 
-    router.push(`${login.user?.role.toLowerCase()}`);
+      // Redirect with error handling
+      try {
+        router.push(`/${login.user.role.toLowerCase()}`);
+      } catch (redirectError) {
+        console.error("Redirect failed:", redirectError);
+        setError("Failed to redirect after login");
+      }
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("An unexpected error occurred during login");
+    } finally {
+      setIsLoading(false);
+    }
   }
+
 
   return (
     <Form {...form}>

@@ -1,7 +1,5 @@
 "use server";
 
-"use server";
-
 import { getCookies } from "@/lib/cookies";
 
 export default async function getCookieForClient() {

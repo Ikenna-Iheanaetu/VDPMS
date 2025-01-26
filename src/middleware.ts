@@ -3,57 +3,50 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getCookies } from "@/lib/cookies";
 
-// Define protected routes and their allowed roles
 const protectedRoutes = {
   "/doctor": ["DOCTOR"],
   "/patient": ["PATIENT"],
   "/nurse": ["NURSE"],
 };
 
-// Define public login routes
-const publicLoginRoutes = ["/login"];
+const publicRoutes = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
-  const cookie = await getCookies();
-
-  // Get the current path
   const path = request.nextUrl.pathname;
+  const cookie = await getCookies();
+  const userRole = cookie?.role;
+  const rolePath = userRole ? `/${userRole.toLowerCase()}` : null;
 
-  // Check if the route is a public login route
-  const isPublicLoginRoute = publicLoginRoutes.some((route) => path === route);
-
-  if (isPublicLoginRoute) {
-    // Allow access to public login routes
+  // Handle public routes
+  if (publicRoutes.some(route => path.startsWith(route))) {
+    if (cookie) {
+      return NextResponse.redirect(new URL(rolePath!, request.url));
+    }
     return NextResponse.next();
   }
 
-  // Check if the route is a protected route
-  const isProtectedRoute = Object.keys(protectedRoutes).some((route) =>
+  // Handle protected routes
+  const protectedRoute = Object.entries(protectedRoutes).find(([route]) => 
     path.startsWith(route)
   );
 
-  if (!isProtectedRoute) {
-    // Allow access to routes that are neither public login nor protected
-    return NextResponse.next();
+  if (protectedRoute) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [basePath, allowedRoles] = protectedRoute;
+
+    // Redirect unauthenticated users to login
+    if (!cookie) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", path);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Redirect unauthorized users to their dashboard
+    if (!allowedRoles.includes(userRole!)) {
+      return NextResponse.redirect(new URL(rolePath!, request.url));
+    }
   }
 
-  // No session means unauthorized for protected routes
-  if (!cookie) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  // Check role-based access for protected routes
-  const userRole = cookie.role;
-  const allowedRoles = Object.entries(protectedRoutes).find(([route]) =>
-    path.startsWith(route)
-  )?.[1];
-
-  if (!allowedRoles?.includes(userRole)) {
-    return NextResponse.redirect(
-      new URL(`/${userRole.toLocaleLowerCase()}`, request.url)
-    );
-  }
-
-  // Allow access if all checks pass
+  // Allow access to non-protected routes
   return NextResponse.next();
 }

@@ -41,12 +41,15 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { createAppointmentRequest } from "@/actions/patient/appointment-request.action";
+import { AppointmentType } from "@prisma/client";
+import getCookieForClient from "@/actions/get-cookie-for-client.action";
 
 const appointmentRequestSchema = z.object({
   preferredDate: z.date({
     required_error: "Please select a preferred date for your appointment.",
   }),
-  appointmentType: z.string({
+  appointmentType: z.nativeEnum(AppointmentType, {
     required_error: "Please select an appointment type.",
   }),
   reason: z
@@ -61,21 +64,40 @@ const appointmentRequestSchema = z.object({
 
 export default function AppointmentRequestDialog() {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof appointmentRequestSchema>>({
     resolver: zodResolver(appointmentRequestSchema),
   });
 
-  function onSubmit(values: z.infer<typeof appointmentRequestSchema>) {
-    toast({
-      title: "Appointment Request Submitted",
-      description:
-        "A nurse will review your request and schedule your appointment.",
-    });
-    console.log(values);
-    setOpen(false);
-    form.reset();
+  async function onSubmit(values: z.infer<typeof appointmentRequestSchema>) {
+    try {
+      setIsLoading(true);
+      const { data } = await getCookieForClient();
+      if (data?.roleSpecificId) {
+        await createAppointmentRequest({
+          ...values,
+          patientId: data.roleSpecificId,
+        });
+      }
+      toast({
+        title: "Appointment Request Submitted",
+        description:
+          "A nurse will review your request and schedule your appointment.",
+      });
+      setOpen(false);
+      form.reset();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit appointment request",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -105,7 +127,7 @@ export default function AppointmentRequestDialog() {
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
+                            "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -150,6 +172,7 @@ export default function AppointmentRequestDialog() {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isLoading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -157,10 +180,18 @@ export default function AppointmentRequestDialog() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="checkup">Regular Check-up</SelectItem>
-                      <SelectItem value="followup">Follow-up</SelectItem>
-                      <SelectItem value="consultation">Consultation</SelectItem>
-                      <SelectItem value="emergency">Emergency</SelectItem>
+                      <SelectItem value={AppointmentType.CHECK_UP}>
+                        Regular Check-up
+                      </SelectItem>
+                      <SelectItem value={AppointmentType.FOLLOW_UP}>
+                        Follow-up
+                      </SelectItem>
+                      <SelectItem value={AppointmentType.CONSULTATION}>
+                        Consultation
+                      </SelectItem>
+                      <SelectItem value={AppointmentType.EMERGENCY}>
+                        Emergency
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -180,6 +211,7 @@ export default function AppointmentRequestDialog() {
                     <Textarea
                       placeholder="Please describe the reason for your appointment request"
                       className="resize-none"
+                      disabled={isLoading}
                       {...field}
                     />
                   </FormControl>
@@ -192,7 +224,9 @@ export default function AppointmentRequestDialog() {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Submit Request</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Submitting..." : "Submit Request"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

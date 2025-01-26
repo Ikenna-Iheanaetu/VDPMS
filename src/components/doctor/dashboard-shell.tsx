@@ -1,19 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Bell, HelpCircle, Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import Link from "next/link"
-import DoctorsSidebar from "./sidebar"
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Link from "next/link";
+import DoctorsSidebar from "./sidebar";
+import logout from "@/actions/logout.action";
+import { redirect } from "next/navigation";
 
 interface DashboardShellProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 const recentPatients = [
@@ -38,10 +46,18 @@ const recentPatients = [
     lastVisit: "3 hours ago",
     status: "Critical",
   },
-]
+];
 
 export default function DashboardShell({ children }: DashboardShellProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const loggedOut = await logout();
+
+    if (loggedOut.success && loggedOut.data) {
+      redirect(loggedOut.data?.redirectUrl);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -50,11 +66,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       </div>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
+        <SheetTrigger asChild></SheetTrigger>
         <SheetContent side="left" className="w-[250px] p-0">
           <DoctorsSidebar />
         </SheetContent>
@@ -63,22 +75,34 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       <div className="flex-1">
         <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6">
           <div className="flex flex-1 items-center gap-4">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsSidebarOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsSidebarOpen(true)}
+            >
               <Menu className="h-5 w-5" />
             </Button>
-            <Input type="search" placeholder="Search patients..." className="max-w-[400px] hidden md:block" />
           </div>
-          <div className="flex items-center gap-2 lg:gap-4">
-            <Button variant="ghost" size="icon">
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Avatar>
-              <AvatarImage src="/placeholder.svg" alt="Dr. Stephen" />
-              <AvatarFallback>SC</AvatarFallback>
-            </Avatar>
+          <div className="flex items-center space-x-3 gap-2">
+            <div className="flex items-center gap-2">
+              <Avatar>
+                <AvatarImage src="/placeholder.svg" alt="Dr. Stephen" />
+                <AvatarFallback>SC</AvatarFallback>
+              </Avatar>
+              <div className="text-sm hidden md:block">
+                <div className="font-semibold">Stephan Him</div>
+                <div className="text-muted-foreground">Doctor</div>
+              </div>
+            </div>
+            <div>
+              <Button
+                className="bg-red-500 text-white"
+                onClick={() => handleLogout()}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </header>
         <div className="flex flex-1">
@@ -100,10 +124,15 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                     {recentPatients.map((patient) => (
                       <TableRow key={patient.id}>
                         <TableCell>
-                          <Link href={`/patients/${patient.id}`} className="hover:underline">
+                          <Link
+                            href={`/patients/${patient.id}`}
+                            className="hover:underline"
+                          >
                             <div>
                               <p className="font-medium">{patient.name}</p>
-                              <p className="text-sm text-muted-foreground">{patient.lastVisit}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {patient.lastVisit}
+                              </p>
                             </div>
                           </Link>
                         </TableCell>
@@ -111,9 +140,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                           <div
                             className={cn(
                               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                              patient.status === "Stable" && "bg-green-100 text-green-800",
-                              patient.status === "Follow-up" && "bg-blue-100 text-blue-800",
-                              patient.status === "Critical" && "bg-red-100 text-red-800",
+                              patient.status === "Stable" &&
+                                "bg-green-100 text-green-800",
+                              patient.status === "Follow-up" &&
+                                "bg-blue-100 text-blue-800",
+                              patient.status === "Critical" &&
+                                "bg-red-100 text-red-800"
                             )}
                           >
                             {patient.diagnosis}
@@ -129,6 +161,5 @@ export default function DashboardShell({ children }: DashboardShellProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,5 +1,3 @@
-"use server"
-
 "use server";
 
 import { encrypt } from "@/lib/jwt";
@@ -7,64 +5,83 @@ import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 
 interface FormData {
-  email: string
-  password: string
-  id: string
+  email: string;
+  password: string;
+  id: string;
 }
 
 export const userLoginAction = async (formData: FormData) => {
-  
+  try {
     const { email, password, id } = formData;
 
-     // Find the user by email
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: {
-      patient: true,
-      nurse: true,
-      doctor: true,
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        patient: true,
+        nurse: true,
+        doctor: true,
+      }
+    });
+
+    if (!user) return { error: "User does not exist" };
+
+    // Validate role-specific ID
+    let roleSpecificId: string;
+    switch (user.role) {
+      case "PATIENT":
+        if (user.patient?.patientId !== id) return { error: "Invalid Patient ID" };
+        roleSpecificId = user.patient.patientId;
+        break;
+      case "NURSE":
+        if (user.nurse?.nurseId !== id) return { error: "Invalid Nurse ID" };
+        roleSpecificId = user.nurse.nurseId;
+        break;
+      case "DOCTOR":
+        if (user.doctor?.doctorId !== id) return { error: "Invalid Doctor ID" };
+        roleSpecificId = user.doctor.doctorId;
+        break;
+      default:
+        return { error: "Invalid user role" };
     }
-  });
 
-  if (!user) return { error: "User does not exist" };
+    // Validate password
+    if (user.password !== password) {
+      return { error: "Invalid password" };
+    }
 
-  // Check if the ID matches the role
-  if (user.role === "PATIENT" && user.patient?.patientId !== id) {
-    return { error: "Invalid Patient ID" };
+    // Prepare session data
+    const sessionData = {
+      name: user.name,
+      userId: user.id,
+      role: user.role,
+      roleSpecificId: roleSpecificId,
+      email: user.email
+    };
+
+    // Encrypt and set cookie
+    const cookieStore = cookies();
+    const session = await encrypt(sessionData);
+    
+    (await cookieStore).set("session", session, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    });
+
+    return { 
+      success: "Login successful", 
+      user: {
+        id: user.id,
+        role: user.role,
+        roleSpecificId,
+        name: user.name,
+        email: user.email
+      }
+    };
+
+  } catch (error) {
+    console.error("Login error:", error);
+    return { error: "An error occurred during login" };
   }
-
-  if (user.role === "NURSE" && user.nurse?.nurseId !== id) {
-    return { error: "Invalid Nurse ID" };
-  }
-
-  if (user.role === "DOCTOR" && user.doctor?.doctorId !== id) {
-    return { error: "Invalid Doctor ID" };
-  }
-
-  // Optionally, validate the password here
-  if (user.password !== password) {
-    return { error: "Invalid password" };
-  }
-
-  const cookieStore = await cookies();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { role, name, id: userId, ...others } = user
-
-  const cookieToBeEncrypted ={
-    name,
-    userId,
-    role
-  }
-
-  const session = await encrypt(cookieToBeEncrypted);
-
-  cookieStore.set("cookie", session, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-
-  return { success: "Login successful", user };
 };
