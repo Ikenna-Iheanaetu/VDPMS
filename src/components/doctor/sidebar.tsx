@@ -13,7 +13,7 @@ const navigation = [
   },
   {
     name: "Appointment",
-    href: "/doctor/appointment",
+    href: "/doctor/appointments",
     icon: Calendar,
   },
   {
@@ -28,7 +28,7 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
+export default function DoctorsSidebar() {
   const pathname = usePathname();
 
   return (

@@ -1,11 +1,11 @@
-import DashboardShell from "@/components/doctor/dashboard-shell"
-import Overview from "@/components/doctor/overview"
+import Overview from "@/components/doctor/overview";
 
-export default function DashboardPage() {
+export default function DoctorDashboardPage() {
   return (
-    <DashboardShell>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Doctor Dashboard</h1>
       <Overview />
-    </DashboardShell>
+    </div>
   )
 }
 
