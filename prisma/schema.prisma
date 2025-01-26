@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -13,6 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums
 enum Role {
   PATIENT
   NURSE
@@ -22,14 +19,56 @@ enum Role {
 enum Gender {
   MALE
   FEMALE
+  OTHER
 }
 
+enum AppointmentType {
+  CHECK_UP
+  FOLLOW_UP
+  CONSULTATION
+  EMERGENCY
+  VIDEO
+  CLINIC
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  PENDING
+  WAITING
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ConditionStatus {
+  STABLE
+  CRITICAL
+  EMERGENCY
+  FOLLOW_UP
+}
+
+// Models
 model User {
-  id        Int      @id @default(autoincrement()) // Auto-generated integer ID
+  id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
   name      String
   role      Role
+  avatar    String?
+  phone     String?
   patient   Patient? @relation("UserToPatient")
   nurse     Nurse?   @relation("UserToNurse")
   doctor    Doctor?  @relation("UserToDoctor")
@@ -38,32 +77,143 @@ model User {
 }
 
 model Patient {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
-  user      User     @relation("UserToPatient", fields: [userId], references: [id], onDelete: Cascade)
-  age       Int
-  patientId String   @unique
-  gender    Gender
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Nurse {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
-  user      User     @relation("UserToNurse", fields: [userId], references: [id], onDelete: Cascade)
-  gender    Gender
-  nurseId   String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int                  @id @default(autoincrement())
+  userId         Int                  @unique
+  user           User                 @relation("UserToPatient", fields: [userId], references: [id], onDelete: Cascade)
+  age            Int
+  patientId      String               @unique
+  gender         Gender
+  bloodType      String?
+  allergies      Allergy[] // Changed to relation
+  lastVisit      DateTime?
+  medicalRecords MedicalRecord[]
+  medications    Medication[]
+  appointments   Appointment[]
+  requests       AppointmentRequest[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 }
 
 model Doctor {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
-  user      User     @relation("UserToDoctor", fields: [userId], references: [id], onDelete: Cascade)
+  id           Int             @id @default(autoincrement())
+  userId       Int             @unique
+  user         User            @relation("UserToDoctor", fields: [userId], references: [id], onDelete: Cascade)
+  gender       Gender
+  doctorId     String          @unique
+  bio          String?
+  appointments Appointment[]
+  records      MedicalRecord[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Nurse {
+  id        Int                  @id @default(autoincrement())
+  userId    Int                  @unique
+  user      User                 @relation("UserToNurse", fields: [userId], references: [id], onDelete: Cascade)
   gender    Gender
-  doctorId  String   @unique
+  nurseId   String               @unique
+  bio       String?
+  shift     String?
+  tasks     Task[]
+  requests  AppointmentRequest[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+}
+
+model Appointment {
+  id            Int               @id @default(autoincrement())
+  patient       Patient           @relation(fields: [patientId], references: [id])
+  patientId     Int
+  doctor        Doctor            @relation(fields: [doctorId], references: [id])
+  doctorId      Int
+  date          DateTime
+  time          String
+  type          AppointmentType
+  status        AppointmentStatus
+  reason        String?
+  vitalsChecked Boolean           @default(false)
+  vitals        Vitals[] // Changed to one-to-many
+  room          String?
+  condition     ConditionStatus?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model MedicalRecord {
+  id        Int             @id @default(autoincrement())
+  patient   Patient         @relation(fields: [patientId], references: [id])
+  patientId Int
+  doctor    Doctor          @relation(fields: [doctorId], references: [id])
+  doctorId  Int
+  diagnosis String
+  treatment String
+  date      DateTime
+  vitals    Vitals[] // Changed to one-to-many
+  condition ConditionStatus
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model AppointmentRequest {
+  id            Int               @id @default(autoincrement())
+  patient       Patient           @relation(fields: [patientId], references: [id])
+  patientId     Int
+  nurse         Nurse?            @relation(fields: [nurseId], references: [id])
+  nurseId       Int?
+  preferredDate DateTime
+  type          AppointmentType
+  reason        String
+  priority      Priority          @default(LOW)
+  status        AppointmentStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model Allergy {
+  id        Int     @id @default(autoincrement())
+  name      String
+  patient   Patient @relation(fields: [patientId], references: [id])
+  patientId Int
+}
+
+model Vitals {
+  id              Int            @id @default(autoincrement())
+  temperature     String
+  bloodPressure   String
+  heartRate       String
+  respiratoryRate String
+  weight          String?
+  height          String?
+  medicalRecord   MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+  medicalRecordId Int?
+  appointment     Appointment?   @relation(fields: [appointmentId], references: [id])
+  appointmentId   Int?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Medication {
+  id        Int      @id @default(autoincrement())
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  patientId Int
+  name      String
+  dosage    String
+  frequency String
+  startDate DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  nurse       Nurse      @relation(fields: [nurseId], references: [id])
+  nurseId     Int
+  title       String
+  description String
+  priority    Priority
+  status      TaskStatus @default(PENDING)
+  dueTime     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
