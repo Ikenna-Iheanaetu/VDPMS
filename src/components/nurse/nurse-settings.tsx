@@ -1,16 +1,38 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import getCookieForClient from "@/actions/get-cookie-for-client.action";
+import { getNurseSettings, updateNurseSettings } from "@/actions/nurse/settings.action";
 
 const nurseSettingsSchema = z.object({
   name: z.string().min(2, {
@@ -22,58 +44,101 @@ const nurseSettingsSchema = z.object({
   nurseId: z.string().min(5, {
     message: "Nurse ID must be at least 5 characters.",
   }),
-//   department: z.string({
-//     required_error: "Please select a department.",
-//   }),
+  //   department: z.string({
+  //     required_error: "Please select a department.",
+  //   }),
   shift: z.string({
     required_error: "Please select a shift.",
   }),
   bio: z.string().max(160).min(4),
-//   notifications: z.boolean().default(false),
-//   theme: z.enum(["light", "dark", "system"]),
-})
+  //   notifications: z.boolean().default(false),
+  //   theme: z.enum(["light", "dark", "system"]),
+});
 
-type NurseSettingsValues = z.infer<typeof nurseSettingsSchema>
+type NurseSettingsValues = z.infer<typeof nurseSettingsSchema>;
 
 const defaultValues: Partial<NurseSettingsValues> = {
-  name: "Nancy Nurse",
-  email: "nancy.nurse@hospital.com",
-  nurseId: "N12345",
-//   department: "General",
+  name: "",
+  email: "",
+  nurseId: "",
+  //   department: "General",
   shift: "Day",
-  bio: "Experienced nurse with a passion for patient care.",
-//   notifications: true,
-//   theme: "system",
-}
+  bio: "",
+  //   notifications: true,
+  //   theme: "system",
+};
 
 export default function NurseSettings() {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { toast } = useToast();
 
   const form = useForm<NurseSettingsValues>({
     resolver: zodResolver(nurseSettingsSchema),
     defaultValues,
-  })
+  });
 
-  function onSubmit(data: NurseSettingsValues) {
-    setIsLoading(true)
+  useEffect(() => {
+    const initializeForm = async () => {
+      try {
+        const { data: cookieData } = await getCookieForClient();
+        if (!cookieData?.userId) throw new Error("User not authenticated");
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+        const result = await getNurseSettings(cookieData.userId);
+        
+        if (result.success && result.data) {
+          form.reset(result.data);
+        } else {
+          throw new Error(result.error || "Failed to load settings");
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to load settings",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeForm();
+  }, [toast, form])
+
+  async function onSubmit(data: NurseSettingsValues) {
+    setIsLoading(true);
+    try {
+      const { data: cookieData } = await getCookieForClient();
+      if (!cookieData?.userId) throw new Error("User not authenticated");
+
+      const result = await updateNurseSettings(cookieData.userId, data);
+
+      if (result.success) {
+        toast({
+          title: "Settings Updated",
+          description: "Your profile settings have been successfully updated.",
+        });
+      } else {
+        throw new Error(result.error || "Failed to update settings");
+      }
+    } catch (error) {
       toast({
-        title: "Settings Updated",
-        description: "Your nurse profile settings have been updated successfully.",
-      })
-      console.log(data)
-    }, 1000)
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to update settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Nurse Profile Settings</CardTitle>
-        <CardDescription>Manage your account settings and preferences.</CardDescription>
+        <CardDescription>
+          Manage your account settings and preferences.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -87,7 +152,9 @@ export default function NurseSettings() {
                   <FormControl>
                     <Input placeholder="Your full name" {...field} />
                   </FormControl>
-                  <FormDescription>This is the name that will be displayed on your profile.</FormDescription>
+                  <FormDescription>
+                    This is the name that will be displayed on your profile.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -101,7 +168,9 @@ export default function NurseSettings() {
                   <FormControl>
                     <Input placeholder="Your email address" {...field} />
                   </FormControl>
-                  <FormDescription>This email will be used for account-related notifications.</FormDescription>
+                  <FormDescription>
+                    This email will be used for account-related notifications.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -113,9 +182,11 @@ export default function NurseSettings() {
                 <FormItem>
                   <FormLabel>Nurse ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your nurse ID" {...field} />
+                    <Input placeholder="Your nurse ID" {...field} readOnly />
                   </FormControl>
-                  <FormDescription>Your unique identification number in the hospital system.</FormDescription>
+                  <FormDescription>
+                    Your unique identification number in the hospital system.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -154,7 +225,11 @@ export default function NurseSettings() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Shift</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your shift" />
@@ -178,9 +253,15 @@ export default function NurseSettings() {
                 <FormItem>
                   <FormLabel>Bio</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Tell us a little about yourself" className="resize-none" {...field} />
+                    <Textarea
+                      placeholder="Tell us a little about yourself"
+                      className="resize-none"
+                      {...field}
+                    />
                   </FormControl>
-                  <FormDescription>A brief description of your experience and specialties.</FormDescription>
+                  <FormDescription>
+                    A brief description of your experience and specialties.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -233,6 +314,5 @@ export default function NurseSettings() {
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }
-

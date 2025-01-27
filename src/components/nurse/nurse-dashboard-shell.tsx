@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
@@ -8,6 +8,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import NurseAppSidebar from "./nurse-app-sidebar";
 import logout from "@/actions/logout.action";
 import { redirect } from "next/navigation";
+import getCookieForClient from "@/actions/get-cookie-for-client.action";
+import { useToast } from "@/hooks/use-toast";
 
 interface NurseDashboardShellProps {
   children: React.ReactNode;
@@ -17,6 +19,28 @@ export default function NurseDashboardShell({
   children,
 }: NurseDashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [nurseName, setNurseName] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const getNurseName = async () => {
+      try {
+        const { data: cookieData } = await getCookieForClient();
+        if (cookieData?.name) {
+          setNurseName(cookieData.name);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to get nurse name",
+          variant: "destructive",
+        });
+      }
+    };
+
+    getNurseName();
+  }, [toast]);
 
   const handleLogout = async () => {
     const loggedOut = await logout();
@@ -55,11 +79,19 @@ export default function NurseDashboardShell({
             <div className="flex items-center space-x-3 gap-2">
               <div className="flex items-center gap-2">
                 <Avatar>
-                  <AvatarImage src="/nurse-avatar.png" alt="Nurse" />
-                  <AvatarFallback>NN</AvatarFallback>
+                  <AvatarImage
+                    src={`https://api.dicebear.com/6.x/initials/svg?seed=${nurseName}`}
+                    alt={nurseName}
+                  />
+                  <AvatarFallback>
+                    {nurseName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="text-sm hidden md:block">
-                  <div className="font-semibold">Nancy Nurse</div>
+                  <div className="font-semibold">{nurseName}</div>
                   <div className="text-muted-foreground">Nurse</div>
                 </div>
               </div>
