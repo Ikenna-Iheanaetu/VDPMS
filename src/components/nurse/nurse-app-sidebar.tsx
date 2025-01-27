@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { LayoutGrid, Calendar, Users2, Clipboard, Stethoscope, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -16,11 +17,11 @@ const navigation = [
     href: "/nurse/appointments",
     icon: Calendar,
   },
-  {
-    name: "Patients",
-    href: "/nurse/patients",
-    icon: Users2,
-  },
+  // {
+  //   name: "Patients",
+  //   href: "/nurse/patients",
+  //   icon: Users2,
+  // },
   {
     name: "Tasks",
     href: "/nurse/tasks",
