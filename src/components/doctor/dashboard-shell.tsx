@@ -21,38 +21,26 @@ import logout from "@/actions/logout.action";
 import { redirect } from "next/navigation";
 import getCookieForClient from "@/actions/get-cookie-for-client.action";
 import { useToast } from "@/hooks/use-toast";
+import { getRecentPatients } from "@/actions/doctor/overview.action";
+import { ConditionStatus } from "@prisma/client";
 
 interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-const recentPatients = [
-  {
-    id: "P001",
-    name: "Olivia Martin",
-    diagnosis: "Hypertension",
-    lastVisit: "1 hour ago",
-    status: "Stable",
-  },
-  {
-    id: "P002",
-    name: "Jackson Lee",
-    diagnosis: "Type 2 Diabetes",
-    lastVisit: "2 hours ago",
-    status: "Follow-up",
-  },
-  {
-    id: "P003",
-    name: "Isabella Nguyen",
-    diagnosis: "Asthma",
-    lastVisit: "3 hours ago",
-    status: "Critical",
-  },
-];
+interface RecentPatients {
+  id: number;
+  name: string;
+  patientId: string;
+  diagnosis: string;
+  lastVisit: Date | null;
+  condition: ConditionStatus;
+}
 
 export default function DashboardShell({ children }: DashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [doctorName, setDoctorName] = useState("");
+  const [recentPatients, setRecentPatients] = useState<RecentPatients[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -74,6 +62,23 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
     getNurseName();
   }, [toast]);
+
+  useEffect(() => {
+    const fetchRecentPatients = async () => {
+      const result = await getRecentPatients();
+      if (result.success && result.data) {
+        setRecentPatients(result.data);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    };
+    fetchRecentPatients();
+  }, [toast]);
+
   const handleLogout = async () => {
     const loggedOut = await logout();
 
@@ -110,14 +115,20 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           <div className="flex items-center space-x-3 gap-2">
             <div className="flex items-center gap-2">
               <Avatar>
-                <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${doctorName}`} alt={doctorName} />
-                <AvatarFallback> {doctorName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join()}</AvatarFallback>
+                <AvatarImage
+                  src={`https://api.dicebear.com/6.x/initials/svg?seed=${doctorName}`}
+                  alt={doctorName}
+                />
+                <AvatarFallback>
+                  {" "}
+                  {doctorName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join()}
+                </AvatarFallback>
               </Avatar>
               <div className="text-sm hidden md:block">
-                <div className="font-semibold">{ doctorName }</div>
+                <div className="font-semibold">{doctorName}</div>
                 <div className="text-muted-foreground">Doctor</div>
               </div>
             </div>
@@ -148,16 +159,16 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                   </TableHeader>
                   <TableBody>
                     {recentPatients.map((patient) => (
-                      <TableRow key={patient.id}>
+                      <TableRow key={patient.patientId}>
                         <TableCell>
                           <Link
-                            href={`/patients/${patient.id}`}
+                            href={`/patients/${patient.patientId}`}
                             className="hover:underline"
                           >
                             <div>
                               <p className="font-medium">{patient.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                {patient.lastVisit}
+                                {patient.lastVisit ? patient.lastVisit.toDateString() : 'N/A'}
                               </p>
                             </div>
                           </Link>
@@ -166,11 +177,11 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                           <div
                             className={cn(
                               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                              patient.status === "Stable" &&
+                              patient.condition === ConditionStatus.STABLE &&
                                 "bg-green-100 text-green-800",
-                              patient.status === "Follow-up" &&
+                              patient.condition === ConditionStatus.FOLLOW_UP &&
                                 "bg-blue-100 text-blue-800",
-                              patient.status === "Critical" &&
+                              patient.condition === ConditionStatus.CRITICAL &&
                                 "bg-red-100 text-red-800"
                             )}
                           >
