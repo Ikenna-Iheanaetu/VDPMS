@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import Link from "next/link";
 import DoctorsSidebar from "./sidebar";
 import logout from "@/actions/logout.action";
 import { redirect } from "next/navigation";
+import getCookieForClient from "@/actions/get-cookie-for-client.action";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -50,7 +52,28 @@ const recentPatients = [
 
 export default function DashboardShell({ children }: DashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [doctorName, setDoctorName] = useState("");
+  const { toast } = useToast();
 
+  useEffect(() => {
+    const getNurseName = async () => {
+      try {
+        const { data: cookieData } = await getCookieForClient();
+        if (cookieData?.name) {
+          setDoctorName(cookieData.name);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to get nurse name",
+          variant: "destructive",
+        });
+      }
+    };
+
+    getNurseName();
+  }, [toast]);
   const handleLogout = async () => {
     const loggedOut = await logout();
 
@@ -87,11 +110,14 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           <div className="flex items-center space-x-3 gap-2">
             <div className="flex items-center gap-2">
               <Avatar>
-                <AvatarImage src="/placeholder.svg" alt="Dr. Stephen" />
-                <AvatarFallback>SC</AvatarFallback>
+                <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${doctorName}`} alt={doctorName} />
+                <AvatarFallback> {doctorName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join()}</AvatarFallback>
               </Avatar>
               <div className="text-sm hidden md:block">
-                <div className="font-semibold">Stephan Him</div>
+                <div className="font-semibold">{ doctorName }</div>
                 <div className="text-muted-foreground">Doctor</div>
               </div>
             </div>
