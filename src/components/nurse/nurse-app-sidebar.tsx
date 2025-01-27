@@ -27,11 +27,11 @@ const navigation = [
     href: "/nurse/tasks",
     icon: Clipboard,
   },
-  {
-    name: "Vitals Monitoring",
-    href: "/nurse/vitals",
-    icon: Stethoscope,
-  },
+  // {
+  //   name: "Vitals Monitoring",
+  //   href: "/nurse/vitals",
+  //   icon: Stethoscope,
+  // },
   {
     name: "Settings",
     href: "/nurse/settings",
