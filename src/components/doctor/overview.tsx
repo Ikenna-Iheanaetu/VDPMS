@@ -13,89 +13,113 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar, Users2, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AppointmentStatus,
+  AppointmentType,
+  ConditionStatus,
+  Gender,
+} from "@prisma/client";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { getDashboardStats, getRecentPatients, getTodaysAppointments } from "@/actions/doctor/overview.action";
 
-const stats = [
-  {
-    name: "Appointments",
-    value: "24.4k",
-    icon: Calendar,
-    iconBgColor: "bg-[#9188FF]",
-    color: "bg-[#7B5EFF]",
-  },
-  {
-    name: "Total Patient",
-    value: "166.3k",
-    icon: Users2,
-    iconBgColor: "bg-[#FF7175]",
-    color: "bg-[#FF5363]",
-  },
-];
 
-const appointments = [
-  {
-    name: "Jhon Smith",
-    type: "Clinic Consulting",
-    time: "Ongoing",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-  {
-    name: "Frank Murray",
-    type: "Video Consulting",
-    time: "10:25",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-  {
-    name: "Ella Lucia",
-    type: "Emergency",
-    time: "11:30",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-  {
-    name: "Alyssa Dehn",
-    type: "Clinic Consulting",
-    time: "12:20",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-];
+interface AppointmentsProps {
+  id: number;
+  name: string;
+  type: AppointmentType;
+  time: string;
+  patientId: string;
+  status: AppointmentStatus;
+  condition?: ConditionStatus | null;
+  image: string;
+}
 
-const patients = [
-  {
-    name: "Deveon Lane",
-    visitId: "OPD-2345",
-    date: "5/7/21",
-    gender: "Male",
-    disease: "Diabetes",
-    status: "Out-Patient",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-  {
-    name: "Albert Flores",
-    visitId: "IPD-2424",
-    date: "5/7/21",
-    gender: "Male",
-    disease: "Diabetes",
-    status: "Out-Patient",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-  {
-    name: "Ella Lucia",
-    visitId: "OPD-2346",
-    date: "8/15/21",
-    gender: "Male",
-    disease: "Diabetes",
-    status: "Out-Patient",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image%201-fcOLTxuNr96pozSky1IbMADW33Rm9x.png",
-  },
-];
+interface PatientsProps{
+  id: number
+  patientId: string
+  name: string
+  diagnosis: string
+  lastVisit: Date | null
+  condition: ConditionStatus
+  gender: Gender
+  image: string
+}
+
+
+interface StatsProps {
+  appointments: number;
+  patients: number;
+}
 
 export default function Overview() {
+  const [stats, setStats] = useState<StatsProps>({
+    appointments: 0,
+    patients: 0,
+  });
+  const [appointments, setAppointments] = useState<AppointmentsProps[]>([]);
+  const [patients, setPatients] = useState<PatientsProps[]>([]);
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch stats
+      const statsResult = await getDashboardStats();
+      if (statsResult.success && statsResult.data) {
+        setStats(statsResult.data);
+      } else {
+        toast({
+          title: "Error",
+          description: statsResult.error,
+          variant: "destructive",
+        });
+      }
+
+      // Fetch appointments
+      const appointmentsResult = await getTodaysAppointments();
+      if (appointmentsResult.success && appointmentsResult.data) {
+        setAppointments(appointmentsResult.data);
+      } else {
+        toast({
+          title: "Error",
+          description: appointmentsResult.error,
+          variant: "destructive",
+        });
+      }
+
+      // Fetch patients
+      const patientsResult = await getRecentPatients();
+      if (patientsResult.success && patientsResult.data) {
+        setPatients(patientsResult.data);
+      } else {
+        toast({
+          title: "Error",
+          description: patientsResult.error,
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchData();
+  }, [toast]);
+
+  const statsData = [
+    {
+      name: "Appointments",
+      value: stats.appointments.toLocaleString(),
+      icon: Calendar,
+      iconBgColor: "bg-[#9188FF]",
+      color: "bg-[#7B5EFF]",
+    },
+    {
+      name: "Total Patient",
+      value: stats.patients.toLocaleString(),
+      icon: Users2,
+      iconBgColor: "bg-[#FF7175]",
+      color: "bg-[#FF5363]",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -104,14 +128,17 @@ export default function Overview() {
       </div>
 
       <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-2">
-        {stats.map((stat) => (
+        {statsData
+        .map((stat) => (
           <Card key={stat.name} className={cn("overflow-hidden", stat.color)}>
             <div className="flex gap-6 justify-center items-center h-40">
-              <div className={cn("p-4 rounded-full", stat.iconBgColor )}>
+              <div className={cn("p-4 rounded-full", stat.iconBgColor)}>
                 <stat.icon className="text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-white">{stat.value}</span>
+                <span className="text-2xl font-bold text-white">
+                  {stat.value}
+                </span>
                 <span className="text-white/70">{stat.name}</span>
               </div>
             </div>
@@ -174,7 +201,6 @@ export default function Overview() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Patient Name</TableHead>
-                  <TableHead>Visit Id</TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead className="hidden md:table-cell">
                     Disease
@@ -185,7 +211,7 @@ export default function Overview() {
               </TableHeader>
               <TableBody>
                 {patients.map((patient) => (
-                  <TableRow key={patient.visitId}>
+                  <TableRow key={patient.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
@@ -202,17 +228,14 @@ export default function Overview() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {patient.visitId}
+                    <TableCell className="hidden md:table-cell">
+                    {patient.lastVisit ? new Date(patient.lastVisit).toLocaleString() : 'N/A'}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {patient.date}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {patient.disease}
+                      {patient.diagnosis}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {patient.status}
+                      { patient.condition }
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon">

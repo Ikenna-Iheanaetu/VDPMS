@@ -168,7 +168,9 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                             <div>
                               <p className="font-medium">{patient.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                {patient.lastVisit ? patient.lastVisit.toDateString() : 'N/A'}
+                                {patient.lastVisit
+                                  ? patient.lastVisit.toDateString()
+                                  : "N/A"}
                               </p>
                             </div>
                           </Link>

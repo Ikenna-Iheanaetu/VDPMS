@@ -80,9 +80,9 @@ export function MyPatients() {
             className="max-w-sm"
           />
           <Dialog>
-            <DialogTrigger asChild>
-              <Button>Add New Patient</Button>
-            </DialogTrigger>
+            {/* <DialogTrigger asChild> */}
+              {/* <Button>Add New Patient</Button> */}
+            {/* </DialogTrigger> */}
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Add New Patient</DialogTitle>
