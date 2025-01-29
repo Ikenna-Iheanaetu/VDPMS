@@ -31,6 +31,15 @@ const navigation = [
 export default function DoctorsSidebar() {
   const pathname = usePathname();
 
+  const isActiveRoute = (href: string) => {
+    // Exact match for overview to prevent it matching all /doctor routes
+    if (href === "/doctor") {
+      return pathname === href;
+    }
+    // For other routes, check if pathname starts with the href
+    return pathname.startsWith(href);
+  };
+
   return (
     <div className="flex h-full w-[250px] flex-col border-r bg-white text-white">
       <div className="p-6 text-black">
@@ -43,7 +52,7 @@ export default function DoctorsSidebar() {
       </div>
       <nav className="flex-1 space-y-2 p-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = isActiveRoute(item.href);
           return (
             <Link
               key={item.name}

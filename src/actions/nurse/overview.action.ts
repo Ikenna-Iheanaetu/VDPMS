@@ -1,9 +1,8 @@
 'use server'
 
-import { PrismaClient } from '@prisma/client'
+import prisma from '@/lib/prisma'
 import { format } from 'date-fns'
 
-const prisma = new PrismaClient()
 
 export type Task = {
   id: number

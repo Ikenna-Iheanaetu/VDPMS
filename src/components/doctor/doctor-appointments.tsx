@@ -7,50 +7,58 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getTodayAppointments, startAppointment } from "@/actions/doctor/appointments.action"
+import { AppointmentStatus, AppointmentType } from "@prisma/client"
+import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
+import { useState } from "react"
 
 type Appointment = {
   id: string
   patientName: string
   patientId: string
   time: string
-  type: string
-  status: "waiting" | "in-progress" | "completed"
+  type: AppointmentType
+  status: AppointmentStatus
   vitalsChecked: boolean
 }
-
-const appointments: Appointment[] = [
-  {
-    id: "1",
-    patientName: "Olivia Martin",
-    patientId: "P001",
-    time: "9:00 AM",
-    type: "Check-up",
-    status: "waiting",
-    vitalsChecked: true,
-  },
-  {
-    id: "2",
-    patientName: "William Kim",
-    patientId: "P002",
-    time: "10:30 AM",
-    type: "Follow-up",
-    status: "waiting",
-    vitalsChecked: true,
-  },
-  {
-    id: "3",
-    patientName: "Sofia Davis",
-    patientId: "P003",
-    time: "2:00 PM",
-    type: "Consultation",
-    status: "waiting",
-    vitalsChecked: false,
-  },
-]
 
 export default function DoctorAppointments() {
   const router = useRouter()
   const today = new Date()
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const result = await getTodayAppointments();
+      if (result.data) {
+        setAppointments(result.data);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    };
+    fetchAppointments();
+  }, [toast])
+
+  const handleStartConsultation = async (appointmentId: string) => {
+    try {
+      await startAppointment(appointmentId)
+      router.push(`/doctor/appointments/consultation/?appointmentId=${appointmentId}`)
+      router.refresh()
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start consultation. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   return (
     <Card>
@@ -93,23 +101,23 @@ export default function DoctorAppointments() {
                 <TableCell>
                   <Badge
                     variant={
-                      appointment.status === "completed"
+                      appointment.status === "COMPLETED"
                         ? "default"
-                        : appointment.status === "in-progress"
-                          ? "secondary"
-                          : "outline"
+                        : appointment.status === "IN_PROGRESS"
+                        ? "secondary"
+                        : "outline"
                     }
                   >
-                    {appointment.status === "waiting" && !appointment.vitalsChecked
+                    {appointment.status === "SCHEDULED" && !appointment.vitalsChecked
                       ? "Awaiting Vitals"
-                      : appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                      : appointment.status.toLowerCase().replace("_", " ")}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
                     disabled={!appointment.vitalsChecked}
-                    onClick={() => router.push(`/consultations/${appointment.id}`)}
+                    onClick={() => handleStartConsultation(appointment.id)}
                   >
                     {appointment.vitalsChecked ? "Start Consultation" : "Waiting for Nurse"}
                   </Button>
@@ -122,4 +130,3 @@ export default function DoctorAppointments() {
     </Card>
   )
 }
-
