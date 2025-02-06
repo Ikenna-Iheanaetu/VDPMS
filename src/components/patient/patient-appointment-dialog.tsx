@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { createAppointmentRequest } from "@/actions/patient/appointment-request.action";
+import { createAppointmentRequest } from "@/actions/patient/appointments.action";
 import { AppointmentType } from "@prisma/client";
 import getCookieForClient from "@/actions/get-cookie-for-client.action";
 
